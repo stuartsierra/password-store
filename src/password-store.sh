@@ -340,6 +340,29 @@ cmd_show() {
 	fi
 }
 
+cmd_clip_and_show() {
+	local path="$1"
+	local passfile="$PREFIX/$path.gpg"
+	check_sneaky_paths "$path"
+	if [[ -f $passfile ]]; then
+		local pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | head -n 1)"
+		[[ -n $pass ]] || exit 1
+		clip "$pass" "$path"
+		$GPG -d "${GPG_OPTS[@]}" "$passfile" | sed 1d
+	elif [[ -d $PREFIX/$path ]]; then
+		if [[ -z $path ]]; then
+			echo "Password Store"
+		else
+			echo "${path%\/}"
+		fi
+		tree -C -l --noreport "$PREFIX/$path" | tail -n +2 | sed 's/\.gpg$//'
+	elif [[ -z $path ]]; then
+		die "Error: password store is empty. Try \"pass init\"."
+	else
+		die "Error: $path is not in the password store."
+	fi
+}
+
 cmd_find() {
 	[[ -z "$@" ]] && die "Usage: $PROGRAM $COMMAND pass-names..."
 	IFS="," eval 'echo "Search Terms: $*"'
@@ -599,6 +622,7 @@ case "$1" in
 	rename|mv) shift;		cmd_copy_move "move" "$@" ;;
 	copy|cp) shift;			cmd_copy_move "copy" "$@" ;;
 	git) shift;			cmd_git "$@" ;;
-	*) COMMAND="show";		cmd_show "$@" ;;
+	show) COMMAND="show";		cmd_show "$@" ;;
+	*) COMMAND="clip_and_show";	cmd_clip_and_show "$@" ;;
 esac
 exit 0
