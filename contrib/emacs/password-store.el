@@ -182,7 +182,7 @@ after `password-store-timeout' seconds."
   (interactive (list (password-store--completing-read)))
   (let ((password (password-store-get entry)))
     (password-store-clear)
-    (kill-new password)
+    (kill-new (trim-string password))
     (setq password-store-kill-ring-pointer kill-ring-yank-pointer)
     (message "Copied %s to the kill ring. Will clear in %s seconds." entry (password-store-timeout))
     (run-at-time (password-store-timeout) nil 'password-store-clear)))
